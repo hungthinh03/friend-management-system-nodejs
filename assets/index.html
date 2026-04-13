@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Friends Management Pro</title>
+
+  <!-- Vue.js 3 -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Custom Config for Tailwind -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom Scrollbar for JSON view */
+    .json-scroll::-webkit-scrollbar { width: 8px; }
+    .json-scroll::-webkit-scrollbar-track { background: #f1f1f1; }
+    .json-scroll::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+    .json-scroll::-webkit-scrollbar-thumb:hover { background: #555; }
+
+    .fade-enter-active, .fade-leave-active { transition: opacity 0.5s ease; }
+    .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+    .list-enter-active, .list-leave-active { transition: all 0.4s ease; }
+    .list-enter-from, .list-leave-to { opacity: 0; transform: translateX(30px); }
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans antialiased h-screen overflow-hidden flex">
+
+<div id="app" class="w-full flex">
+
+  <!-- SIDEBAR -->
+  <aside class="w-64 bg-white shadow-xl hidden md:flex flex-col z-10">
+    <div class="p-6 flex items-center gap-3 border-b border-gray-100">
+      <div class="w-10 h-10 bg-brand-600 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-brand-500/30">
+        <i class="fa-solid fa-users"></i>
+      </div>
+      <div>
+        <h1 class="font-bold text-gray-800 text-lg leading-tight">Friends Manager</h1>
+        <p class="text-xs text-gray-400">Sails.js API Dashboard</p>
+      </div>
+    </div>
+
+    <nav class="flex-1 overflow-y-auto py-4">
+      <ul class="space-y-1 px-3">
+        <li v-for="tab in tabs" :key="tab.id">
+          <button
+            @click="activeTab = tab.id"
+            :class="[
+                                'w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200',
+                                activeTab === tab.id
+                                    ? 'bg-brand-50 text-brand-700 shadow-sm ring-1 ring-brand-200'
+                                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                            ]"
+          >
+            <i :class="[tab.icon, 'w-5 text-center']"></i>
+            {{ tab.label }}
+          </button>
+        </li>
+      </ul>
+    </nav>
+
+    <div class="p-4 border-t border-gray-100 text-center">
+      <p class="text-xs text-gray-400">API Server Status:</p>
+      <div class="flex items-center justify-center gap-2 mt-1">
+        <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+        <span class="text-xs font-semibold text-green-600">Connected (Localhost)</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="flex-1 flex flex-col h-full relative overflow-hidden">
+    <!-- Mobile Header -->
+    <header class="md:hidden bg-white p-4 shadow-sm flex items-center justify-between">
+      <span class="font-bold text-gray-800">Friends Manager</span>
+      <button class="text-gray-500 focus:outline-none"><i class="fa-solid fa-bars"></i></button>
+    </header>
+
+    <div class="flex-1 overflow-y-auto p-4 md:p-8">
+      <div class="max-w-4xl mx-auto">
+
+        <!-- Breadcrumb / Title -->
+        <div class="mb-8">
+          <h2 class="text-2xl font-bold text-gray-900">{{ currentTab.label }}</h2>
+          <p class="text-gray-500 mt-1">{{ currentTab.desc }}</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <!-- Form Area -->
+          <div class="lg:col-span-2 space-y-6">
+
+            <!-- Dynamic Forms based on Active Tab -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
+
+              <!-- 1. Connect Friends -->
+              <div v-if="activeTab === 'connect'" class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Email Người A</label>
+                  <input type="email" v-model="forms.connect.email1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition" placeholder="andy@example.com">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Email Người B</label>
+                  <input type="email" v-model="forms.connect.email2" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition" placeholder="john@example.com">
+                </div>
+                <button @click="handleSubmit('connect')" :disabled="loading.connect" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 rounded-lg shadow-md shadow-brand-500/20 transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center gap-2">
+                  <i v-if="loading.connect" class="fa-solid fa-circle-notch fa-spin"></i>
+                  <span v-else><i class="fa-solid fa-user-plus mr-2"></i>Tạo kết nối</span>
+                </button>
+              </div>
+
+              <!-- 2. Get Friends -->
+              <div v-if="activeTab === 'list'" class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Email cần tra cứu</label>
+                  <input type="email" v-model="forms.list.email" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition" placeholder="andy@example.com">
+                </div>
+                <button @click="handleSubmit('list')" :disabled="loading.list" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 rounded-lg shadow-md shadow-brand-500/20 transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center gap-2">
+                  <i v-if="loading.list" class="fa-solid fa-circle-notch fa-spin"></i>
+                  <span v-else><i class="fa-solid fa-list mr-2"></i>Lấy danh sách bạn bè</span>
+                </button>
+              </div>
+
+              <!-- 3. Common Friends -->
+              <div v-if="activeTab === 'common'" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email 1</label>
+                    <input type="email" v-model="forms.common.email1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email 2</label>
+                    <input type="email" v-model="forms.common.email2" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition">
+                  </div>
+                </div>
+                <button @click="handleSubmit('common')" :disabled="loading.common" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 rounded-lg shadow-md shadow-brand-500/20 transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center gap-2">
+                  <i v-if="loading.common" class="fa-solid fa-circle-notch fa-spin"></i>
+                  <span v-else><i class="fa-solid fa-users-rays mr-2"></i>Tìm bạn chung</span>
+                </button>
+              </div>
+
+              <!-- 4. Subscribe -->
+              <div v-if="activeTab === 'subscribe'" class="space-y-4">
+                <div class="p-4 bg-cyan-50 text-cyan-800 rounded-lg text-sm mb-4 border border-cyan-100">
+                  <i class="fa-solid fa-info-circle mr-1"></i> Theo dõi không đồng nghĩa là kết bạn.
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Người theo dõi (Requestor)</label>
+                  <input type="email" v-model="forms.subscribe.requestor" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none transition">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Mục tiêu (Target)</label>
+                  <input type="email" v-model="forms.subscribe.target" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none transition">
+                </div>
+                <button @click="handleSubmit('subscribe')" :disabled="loading.subscribe" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-semibold py-2.5 rounded-lg shadow-md shadow-cyan-500/20 transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center gap-2">
+                  <i v-if="loading.subscribe" class="fa-solid fa-circle-notch fa-spin"></i>
+                  <span v-else><i class="fa-solid fa-bell mr-2"></i>Theo dõi cập nhật</span>
+                </button>
+              </div>
+
+              <!-- 5. Block -->
+              <div v-if="activeTab === 'block'" class="space-y-4">
+                <div class="p-4 bg-red-50 text-red-800 rounded-lg text-sm mb-4 border border-red-100">
+                  <i class="fa-solid fa-ban mr-1"></i> Hành động này sẽ chặn nhận cập nhật từ người kia.
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Người chặn (Requestor)</label>
+                  <input type="email" v-model="forms.block.requestor" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Người bị chặn (Target)</label>
+                  <input type="email" v-model="forms.block.target" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition">
+                </div>
+                <button @click="handleSubmit('block')" :disabled="loading.block" class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2.5 rounded-lg shadow-md shadow-red-500/20 transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center gap-2">
+                  <i v-if="loading.block" class="fa-solid fa-circle-notch fa-spin"></i>
+                  <span v-else><i class="fa-solid fa-user-slash mr-2"></i>Chặn người này</span>
+                </button>
+              </div>
+
+              <!-- 6. Recipients -->
+              <div v-if="activeTab === 'recipients'" class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Người gửi (Sender)</label>
+                  <input type="email" v-model="forms.recipients.sender" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition" placeholder="john@example.com">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Nội dung cập nhật</label>
+                  <textarea v-model="forms.recipients.text" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition" placeholder="Hello World! kate@example.com"></textarea>
+                  <p class="text-xs text-gray-400 mt-1">Hệ thống sẽ tự động nhận diện email trong nội dung.</p>
+                </div>
+                <button @click="handleSubmit('recipients')" :disabled="loading.recipients" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 rounded-lg shadow-md shadow-brand-500/20 transition-all active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center gap-2">
+                  <i v-if="loading.recipients" class="fa-solid fa-circle-notch fa-spin"></i>
+                  <span v-else><i class="fa-solid fa-paper-plane mr-2"></i>Lấy danh sách người nhận</span>
+                </button>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Result Panel -->
+          <div class="lg:col-span-1">
+            <div class="bg-gray-900 rounded-2xl shadow-lg overflow-hidden flex flex-col h-full min-h-[300px]">
+              <div class="bg-gray-800 px-4 py-3 border-b border-gray-700 flex justify-between items-center">
+                <span class="text-gray-300 font-mono text-sm">API Response</span>
+                <span v-if="response" class="text-xs px-2 py-0.5 rounded bg-gray-700 text-gray-300">{{ responseTime }}ms</span>
+              </div>
+              <div class="p-4 overflow-auto json-scroll flex-1">
+                <pre v-if="response" class="text-sm text-green-400 font-mono whitespace-pre-wrap">{{ formattedResponse }}</pre>
+                <div v-else class="h-full flex flex-col items-center justify-center text-gray-600 opacity-50">
+                  <i class="fa-solid fa-code text-4xl mb-2"></i>
+                  <p class="text-xs">Chưa có dữ liệu phản hồi</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="fixed top-5 right-5 z-50 flex flex-col gap-3 pointer-events-none">
+      <transition-group name="list">
+        <div v-for="toast in toasts" :key="toast.id"
+             :class="[
+                            'pointer-events-auto flex items-center w-full max-w-xs p-4 text-gray-500 bg-white rounded-lg shadow-lg border-l-4',
+                            toast.type === 'success' ? 'border-green-500' : 'border-red-500'
+                        ]">
+          <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8"
+               :class="toast.type === 'success' ? 'text-green-500 bg-green-100' : 'text-red-500 bg-red-100'">
+            <i :class="toast.type === 'success' ? 'fa-solid fa-check' : 'fa-solid fa-exclamation'"></i>
+          </div>
+          <div class="ml-3 text-sm font-normal text-gray-800">{{ toast.message }}</div>
+        </div>
+      </transition-group>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  const { createApp, ref, computed, reactive } = Vue;
+
+  createApp({
+    setup() {
+      const activeTab = ref('connect');
+      const response = ref(null);
+      const responseTime = ref(0);
+      const API_BASE = 'http://localhost:1337'; // Sails.js default port
+
+      const toasts = ref([]);
+      let toastId = 0;
+
+      // Loading states for each button
+      const loading = reactive({
+        connect: false, list: false, common: false,
+        subscribe: false, block: false, recipients: false
+      });
+
+      // Form data models
+      const forms = reactive({
+        connect: { email1: 'andy@example.com', email2: 'john@example.com' },
+        list: { email: 'andy@example.com' },
+        common: { email1: 'andy@example.com', email2: 'john@example.com' },
+        subscribe: { requestor: 'lisa@example.com', target: 'john@example.com' },
+        block: { requestor: 'andy@example.com', target: 'john@example.com' },
+        recipients: { sender: 'john@example.com', text: 'Hello! kate@example.com' }
+      });
+
+      const tabs = [
+        { id: 'connect', label: 'Kết nối bạn bè', desc: 'Tạo mối quan hệ bạn bè giữa hai email.', icon: 'fa-solid fa-user-group' },
+        { id: 'list', label: 'Danh sách bạn bè', desc: 'Xem tất cả bạn bè của một email.', icon: 'fa-solid fa-address-book' },
+        { id: 'common', label: 'Bạn bè chung', desc: 'Tìm những người bạn chung giữa hai email.', icon: 'fa-solid fa-users-viewfinder' },
+        { id: 'subscribe', label: 'Theo dõi', desc: 'Đăng ký nhận cập nhật từ người khác (không kết bạn).', icon: 'fa-solid fa-rss' },
+        { id: 'block', label: 'Chặn', desc: 'Ngừng nhận cập nhật từ một email nào đó.', icon: 'fa-solid fa-ban' },
+        { id: 'recipients', label: 'Danh sách nhận', desc: 'Lấy danh sách người nhận cho một bản cập nhật.', icon: 'fa-solid fa-paper-plane' },
+      ];
+
+      const currentTab = computed(() => tabs.find(t => t.id === activeTab.value));
+
+      const formattedResponse = computed(() => {
+        return response.value ? JSON.stringify(response.value, null, 2) : '';
+      });
+
+      const showToast = (message, type = 'success') => {
+        const id = toastId++;
+        toasts.value.push({ id, message, type });
+        setTimeout(() => {
+          toasts.value = toasts.value.filter(t => t.id !== id);
+        }, 3000);
+      };
+
+      const callApi = async (endpoint, payload) => {
+        const startTime = performance.now();
+        try {
+          const res = await fetch(`${API_BASE}${endpoint}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          const data = await res.json();
+          response.value = data;
+          responseTime.value = Math.round(performance.now() - startTime);
+
+          if (res.ok && data.success !== false) {
+            showToast('Thực hiện thành công!', 'success');
+          } else {
+            showToast('Có lỗi xảy ra từ Server.', 'error');
+          }
+        } catch (err) {
+          console.error(err);
+          showToast('Lỗi kết nối API: ' + err.message, 'error');
+          response.value = { error: err.message };
+        }
+      };
+
+      const handleSubmit = async (type) => {
+        loading[type] = true;
+        response.value = null; // Clear previous result
+
+        // Small delay to show off loading spinner
+        await new Promise(r => setTimeout(r, 500));
+
+        switch (type) {
+          case 'connect':
+            if(!forms.connect.email1 || !forms.connect.email2) { showToast('Thiếu email', 'error'); break; }
+            await callApi('/api/friend/create', { friends: [forms.connect.email1, forms.connect.email2] });
+            break;
+          case 'list':
+            if(!forms.list.email) { showToast('Thiếu email', 'error'); break; }
+            await callApi('/api/friend/list', { email: forms.list.email });
+            break;
+          case 'common':
+            if(!forms.common.email1 || !forms.common.email2) { showToast('Thiếu email', 'error'); break; }
+            await callApi('/api/friend/common', { friends: [forms.common.email1, forms.common.email2] });
+            break;
+          case 'subscribe':
+            if(!forms.subscribe.requestor || !forms.subscribe.target) { showToast('Thiếu thông tin', 'error'); break; }
+            await callApi('/api/subscribe', { requestor: forms.subscribe.requestor, target: forms.subscribe.target });
+            break;
+          case 'block':
+            if(!forms.block.requestor || !forms.block.target) { showToast('Thiếu thông tin', 'error'); break; }
+            await callApi('/api/block', { requestor: forms.block.requestor, target: forms.block.target });
+            break;
+          case 'recipients':
+            if(!forms.recipients.sender || !forms.recipients.text) { showToast('Thiếu thông tin', 'error'); break; }
+            await callApi('/api/update/recipients', { sender: forms.recipients.sender, text: forms.recipients.text });
+            break;
+        }
+
+        loading[type] = false;
+      };
+
+      return {
+        activeTab, tabs, currentTab, forms, loading, handleSubmit,
+        response, formattedResponse, responseTime, toasts
+      };
+    }
+  }).mount('#app');
+</script>
+</body>
+</html>
