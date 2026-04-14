@@ -1,5 +1,5 @@
 {
-  "name": "friend-management-project",
+  "name": "op-friend-management",
   "private": true,
   "version": "0.0.0",
   "description": "a Sails application",
@@ -27,11 +27,11 @@
   "main": "app.js",
   "repository": {
     "type": "git",
-    "url": "git://github.com/anonymous node/sails user/friend-management-project.git"
+    "url": "https://gitlab.com/thienkght2016/op-friend-management.git"
   },
   "author": "anonymous node/sails user",
   "license": "",
   "engines": {
-    "node": "^24.12"
+    "node": "^20.20"
   }
 }
