@@ -5,7 +5,7 @@ module.exports = {
   attributes: {
     id: {
       type: 'number',
-      autoIncrement: true   // important
+      autoIncrement: true
     },
     userId1: {
       type: 'number',

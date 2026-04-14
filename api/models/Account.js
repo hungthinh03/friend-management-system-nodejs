@@ -10,6 +10,7 @@ module.exports = {
     },
     email: {
       type: 'string',
+      columnType: 'varchar(50)',
       required: true
     }
   }
