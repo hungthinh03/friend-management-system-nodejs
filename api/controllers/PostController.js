@@ -50,7 +50,7 @@ module.exports = {
 
       // combine all recipients
       let allIds = [...friendIds, ...followerIds, ...mentionedIds];
-      let uniqueIds = [...new Set(allIds)]; // remove duplicates
+      let uniqueIds = [...new Set(allIds)].filter(id => id !== senderId); // remove duplicates
 
       // remove users who blocked sender
       let blocks = await Block.find({
