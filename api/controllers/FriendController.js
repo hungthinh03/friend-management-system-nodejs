@@ -1,4 +1,5 @@
 module.exports = {
+
   /**
    * 1. Tạo kết nối bạn bè
    */
@@ -7,38 +8,38 @@ module.exports = {
       const { friends } = req.body;
 
       if (!friends || friends.length !== 2) {
-        return res.badRequest({ success: false, message: 'Invalid input' });
+        return res.badRequest({ error: 'Invalid input' });
       }
 
       const [email1, email2] = friends;
 
       if (email1 === email2) {
-        return res.badRequest({ success: false, message: 'Cannot friend yourself' });
+        return res.badRequest({ error: 'Cannot friend yourself' });
       }
 
-      // tìm hoặc tạo user
-      let user1 = await Account.findOne({ email: email1 });
-      if (!user1) user1 = await Account.create({ email: email1 }).fetch();
+      const user1 = await Account.findOne({ email: email1 });
+      const user2 = await Account.findOne({ email: email2 });
 
-      let user2 = await Account.findOne({ email: email2 });
-      if (!user2) user2 = await Account.create({ email: email2 }).fetch();
+      if (!user1 || !user2) {
+        return res.badRequest({ error: 'User not found' });
+      }
 
-      // chuẩn hóa để tránh duplicate
-      const u1 = Math.min(user1.userId, user2.userId);
-      const u2 = Math.max(user1.userId, user2.userId);
+      const u1 = Math.min(user1.user_id, user2.user_id);
+      const u2 = Math.max(user1.user_id, user2.user_id);
 
-      // check đã là bạn chưa
       const existed = await Friend.findOne({
-        userId1: u1,
-        userId2: u2
+        user_id1: u1,
+        user_id2: u2
       });
 
-      if (!existed) {
-        await Friend.create({
-          userId1: u1,
-          userId2: u2
-        });
+      if (existed) {
+        return res.json({ success: true }); 
       }
+
+      await Friend.create({
+        user_id1: u1,
+        user_id2: u2
+      });
 
       return res.json({ success: true });
 
@@ -55,7 +56,7 @@ module.exports = {
       const { friends } = req.body;
 
       if (!friends || friends.length !== 2) {
-        return res.badRequest({ success: false, message: 'Invalid input' });
+        return res.badRequest({ error: 'Invalid input' });
       }
 
       const [email1, email2] = friends;
@@ -64,24 +65,20 @@ module.exports = {
       const user2 = await Account.findOne({ email: email2 });
 
       if (!user1 || !user2) {
-        return res.badRequest({ success: false, message: 'User not found' });
+        return res.badRequest({ error: 'User not found' });
       }
-
-      const u1 = Math.min(user1.userId, user2.userId);
-      const u2 = Math.max(user1.userId, user2.userId);
+      const u1 = Math.min(user1.user_id, user2.user_id);
+      const u2 = Math.max(user1.user_id, user2.user_id);
 
       await Friend.destroy({
-        userId1: u1,
-        userId2: u2
+        user_id1: u1, user_id2: u2
       });
 
       return res.json({ success: true });
-
     } catch (err) {
       return res.serverError(err);
     }
   },
-
   /**
    * 3. Lấy danh sách bạn bè của một email
    */
@@ -90,31 +87,29 @@ module.exports = {
       const { email } = req.body;
 
       if (!email) {
-        return res.badRequest({ success: false, message: 'Email is required' });
+        return res.badRequest({ error: 'Email is required' });
       }
 
       const user = await Account.findOne({ email });
 
       if (!user) {
-        return res.json({
-          success: true,
-          friends: [],
-          count: 0
-        });
+        return res.badRequest({ error: 'User not found' });
       }
 
-      // lấy tất cả quan hệ liên quan
       const relations = await Friend.find({
         or: [
-          { userId1: user.userId },
-          { userId2: user.userId }
+          { user_id1: user.user_id },
+          { user_id2: user.user_id }
         ]
       });
 
-      // lấy id bạn bè
-      const friendIds = relations.map(r =>
-        r.userId1 === user.userId ? r.userId2 : r.userId1
-      );
+      const friendIds = [
+        ...new Set(
+          relations.map(r =>
+            r.user_id1 === user.user_id ? r.user_id2 : r.user_id1
+          )
+        )
+      ];
 
       if (friendIds.length === 0) {
         return res.json({
@@ -124,9 +119,8 @@ module.exports = {
         });
       }
 
-      // lấy email
       const friends = await Account.find({
-        userId: friendIds
+        user_id: friendIds
       });
 
       return res.json({
@@ -139,6 +133,5 @@ module.exports = {
       return res.serverError(err);
     }
   }
-
 
 };
