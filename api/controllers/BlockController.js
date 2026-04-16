@@ -32,8 +32,8 @@ module.exports = {
 
       // NẾU ĐÃ CHẶN RỒI -> DỪNG LẠI LUÔN, KHÔNG CẦN CHẠY CODE BÊN DƯỚI NỮA
       if (existingBlock) {
-        return res.json({
-          success: true,
+        return res.badRequest({
+          success: false,
           message: 'Đã chặn từ trước nên không cần thực hiện lại'
         });
       }
@@ -98,11 +98,11 @@ module.exports = {
         blockedId: targetId
       });
 
-      // NẾU KHÔNG CÓ (CHƯA CHẶN) -> DỪNG VÀ BÁO THÀNH CÔNG LUÔN
+      // NẾU KHÔNG CÓ (CHƯA CHẶN) -> DỪNG
       if (!existingBlock) {
-        return res.json({
-          success: true,
-          message: 'Chưa chặn từ trước nên không cần hủy'
+        return res.badRequest({
+          success: false,
+          message: 'Người dùng này không được chặn bởi bạn'
         });
       }
 
