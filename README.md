@@ -163,11 +163,14 @@ SQL Script to recreate the database: [frienddb.sql](./sql/frienddb.sql)
 ## 4. API Testing
 Use the included Postman collection to test the API endpoints with the predefined requests. Postman collection: [op_friend_management.postman_collection.json](./postman/op_friend_management.postman_collection.json)
 
-## 5. Time Frames
+## 5. Interface overview
+<img src="assets/images/screen1.png" style="width:75%;"/>
+
+## 6. Time Frames
 - **Time Frame**: 2 Weeks
 - **Start date**: 06 April, 2026
 
-## 6. Technical Specifications
+## 7. Technical Specifications
 - **Architecture:** RESTful API.
 - **Data Format:** JSON for all requests and responses.
 - **Persistence:** Relational database (PostgreSQL).
