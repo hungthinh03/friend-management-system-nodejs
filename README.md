@@ -161,7 +161,9 @@ The system will use a relational database with the following core tables:
 SQL Script to recreate the database: [frienddb.sql](./sql/frienddb.sql)
 
 ## 4. API Testing
-Use the included Postman collection to test the API endpoints with the predefined requests. Postman collection: [op_friend_management.postman_collection.json](./postman/op_friend_management.postman_collection.json)
+Use the included Postman collection to test the API endpoints with the predefined requests. 
+
+Postman collection: [op_friend_management.postman_collection.json](./postman/op_friend_management.postman_collection.json)
 
 ## 5. Interface Overview
 <img src="assets/images/screen1.png" style="width:75%;"/>

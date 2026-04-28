@@ -6,11 +6,11 @@ module.exports = {
 
       // 1. Validate dữ liệu đầu vào
       if (!requestor || !target) {
-        return res.badRequest({ success: false, message: 'Vui lòng cung cấp đủ requestor và target' });
+        return res.badRequest({ success: false, message: 'Missing required fields' });
       }
 
       if (requestor === target) {
-        return res.badRequest({ success: false, message: 'Bạn không thể tự chặn chính mình' });
+        return res.badRequest({ success: false, message: 'Cannot block self' });
       }
 
       // 2. Tìm ID của hai người dùng dựa vào email
@@ -18,7 +18,7 @@ module.exports = {
       const targetUser = await Account.findOne({ email: target });
 
       if (!requestorUser || !targetUser) {
-        return res.status(404).json({ success: false, message: 'Không tìm thấy người dùng với email đã cho' });
+        return res.status(404).json({ success: false, message: 'User not found' });
       }
 
       const requestorId = requestorUser.userId;
@@ -34,7 +34,7 @@ module.exports = {
       if (existingBlock) {
         return res.badRequest({
           success: false,
-          message: 'Đã chặn từ trước nên không cần thực hiện lại'
+          message: 'Email has already been blocked',
         });
       }
 
@@ -67,7 +67,7 @@ module.exports = {
 
     } catch (error) {
       console.error(error);
-      return res.serverError({ success: false, message: 'Lỗi server', error: error.message });
+      return res.serverError({ success: false, message: 'Server error', error: error.message });
     }
   },
 
@@ -78,7 +78,7 @@ module.exports = {
 
       // 1. Validate dữ liệu đầu vào
       if (!requestor || !target) {
-        return res.badRequest({ success: false, message: 'Vui lòng cung cấp đủ requestor và target' });
+        return res.badRequest({ success: false, message: 'Missing required fields' });
       }
 
       // 2. Tìm ID của hai người dùng
@@ -86,7 +86,7 @@ module.exports = {
       const targetUser = await Account.findOne({ email: target });
 
       if (!requestorUser || !targetUser) {
-        return res.status(404).json({ success: false, message: 'Không tìm thấy người dùng với email đã cho' });
+        return res.status(404).json({ success: false, message: 'User not found' });
       }
 
       const requestorId = requestorUser.userId;
@@ -102,7 +102,7 @@ module.exports = {
       if (!existingBlock) {
         return res.badRequest({
           success: false,
-          message: 'Người dùng này không được chặn bởi bạn'
+          message: 'Email is not blocked',
         });
       }
 
@@ -115,7 +115,7 @@ module.exports = {
 
     } catch (error) {
       console.error(error);
-      return res.serverError({ success: false, message: 'Lỗi server', error: error.message });
+      return res.serverError({ success: false, message: 'Server error', error: error.message });
     }
   }
 
